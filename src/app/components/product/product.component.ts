@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ProductService } from 'src/app/services/product.service';
 import { Product } from 'src/app/modals/product';
-import {HttpClient} from '@angular/common/http'
-import { ProductResponseModel } from 'src/app/modals/productResponseModel';
+import { ActivatedRoute } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-product',
@@ -12,18 +13,39 @@ export class ProductComponent implements OnInit {
 
 
   products: Product[] = [];
-  apiUrl ="https://localhost:44396/api/products/getall"
+  dataLoaded = false
+  filterText=""
 
-  constructor(private httpClient:HttpClient) { }
+  constructor(private productService:ProductService, private activatedRoute:ActivatedRoute,private toastrService:ToastrService) { }
 
   ngOnInit(): void {
-    this.getProducts();
+
+    this.activatedRoute.params.subscribe(params=>{
+      if(params["categoryId"]){
+        this.getProductsByCategory(params["categoryId"])
+      }else{
+        this.getProducts()
+      }
+    })
+
   }
 
   getProducts(){
-    this.httpClient.get<ProductResponseModel>(this.apiUrl).subscribe((response) => {
+    this.productService.getProducts().subscribe(response=> {
       this.products = response.data
+      this.dataLoaded =true
     });
+  }
+
+  getProductsByCategory(categoryId:number){
+    this.productService.getProductsByCategory(categoryId).subscribe(response=> {
+      this.products = response.data
+      this.dataLoaded =true
+    });
+  }
+
+  addToCart(product:Product){
+    this.toastrService.success("Sepete Eklendi :",product.productName)
   }
 
 }
